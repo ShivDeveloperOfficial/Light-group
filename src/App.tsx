@@ -19,8 +19,161 @@ import {
   ChevronDown,
   Sun,
   Moon,
-  Globe
+  Globe,
+  User,
+  Lock,
+  Mail,
+  Loader2
 } from 'lucide-react';
+
+const AuthModal = ({ isOpen, onClose, onAuthSuccess }: { isOpen: boolean, onClose: () => void, onAuthSuccess: (user: any) => void }) => {
+  const [isLogin, setIsLogin] = useState(true);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [name, setName] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setError('');
+
+    const endpoint = isLogin ? '/api/auth/login' : '/api/auth/signup';
+    const body = isLogin ? { email, password } : { email, password, name };
+
+    try {
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      const data = await response.json();
+      if (data.success) {
+        onAuthSuccess(data.user);
+        onClose();
+      } else {
+        setError(data.error || 'Authentication failed');
+      }
+    } catch (err) {
+      setError('Something went wrong. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <AnimatePresence>
+      {isOpen && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-6">
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={onClose}
+            className="absolute inset-0 bg-black/80 backdrop-blur-sm"
+          />
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9, y: 20 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.9, y: 20 }}
+            className="relative w-full max-w-md glass p-8 rounded-3xl overflow-hidden"
+          >
+            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-brand-gold to-transparent" />
+            
+            <button onClick={onClose} className="absolute top-4 right-4 text-white/40 hover:text-white">
+              <X className="w-5 h-5" />
+            </button>
+
+            <div className="text-center mb-8">
+              <Sun className="w-10 h-10 text-brand-gold mx-auto mb-4" />
+              <h2 className="text-3xl font-serif">{isLogin ? 'Welcome Back' : 'Join Light Group'}</h2>
+              <p className="text-white/50 text-sm mt-2">
+                {isLogin ? 'Enter your credentials to access your account' : 'Create an account to start your journey with us'}
+              </p>
+            </div>
+
+            <form onSubmit={handleSubmit} className="space-y-4">
+              {!isLogin && (
+                <div className="space-y-2">
+                  <label className="text-[10px] uppercase tracking-widest text-white/40 ml-1">Full Name</label>
+                  <div className="relative">
+                    <User className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/20" />
+                    <input
+                      type="text"
+                      required
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      className="w-full bg-white/5 border border-white/10 rounded-xl py-3 pl-12 pr-4 text-sm focus:border-brand-gold outline-none transition-colors"
+                      placeholder="John Doe"
+                    />
+                  </div>
+                </div>
+              )}
+
+              <div className="space-y-2">
+                <label className="text-[10px] uppercase tracking-widest text-white/40 ml-1">Email Address</label>
+                <div className="relative">
+                  <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/20" />
+                  <input
+                    type="email"
+                    required
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="w-full bg-white/5 border border-white/10 rounded-xl py-3 pl-12 pr-4 text-sm focus:border-brand-gold outline-none transition-colors"
+                    placeholder="hello@example.com"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-[10px] uppercase tracking-widest text-white/40 ml-1">Password</label>
+                <div className="relative">
+                  <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/20" />
+                  <input
+                    type="password"
+                    required
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="w-full bg-white/5 border border-white/10 rounded-xl py-3 pl-12 pr-4 text-sm focus:border-brand-gold outline-none transition-colors"
+                    placeholder="••••••••"
+                  />
+                </div>
+              </div>
+
+              {error && (
+                <motion.p
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="text-red-400 text-xs text-center"
+                >
+                  {error}
+                </motion.p>
+              )}
+
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full bg-white text-black py-3 rounded-xl font-medium text-sm uppercase tracking-widest hover:bg-brand-gold hover:text-white transition-all duration-300 flex items-center justify-center gap-2 disabled:opacity-50"
+              >
+                {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : (isLogin ? 'Sign In' : 'Create Account')}
+              </button>
+            </form>
+
+            <div className="mt-8 text-center">
+              <button
+                onClick={() => setIsLogin(!isLogin)}
+                className="text-xs text-white/40 hover:text-brand-gold transition-colors"
+              >
+                {isLogin ? "Don't have an account? Sign Up" : "Already have an account? Sign In"}
+              </button>
+            </div>
+          </motion.div>
+        </div>
+      )}
+    </AnimatePresence>
+  );
+};
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 
@@ -28,7 +181,7 @@ function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-const Navbar = () => {
+const Navbar = ({ onAuthOpen, user, onLogout }: { onAuthOpen: () => void, user: any, onLogout: () => void }) => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
@@ -68,13 +221,27 @@ const Navbar = () => {
               {item}
             </motion.a>
           ))}
-          <motion.button
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="px-6 py-2 rounded-full border border-white/20 hover:border-brand-gold hover:text-brand-gold transition-all duration-300 text-xs uppercase tracking-widest"
-          >
-            Inquire
-          </motion.button>
+          
+          {user ? (
+            <div className="flex items-center gap-4">
+              <span className="text-[10px] uppercase tracking-widest text-brand-gold">Hi, {user.name.split(' ')[0]}</span>
+              <button
+                onClick={onLogout}
+                className="px-6 py-2 rounded-full border border-white/20 hover:border-red-500/50 hover:text-red-400 transition-all duration-300 text-xs uppercase tracking-widest"
+              >
+                Logout
+              </button>
+            </div>
+          ) : (
+            <motion.button
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              onClick={onAuthOpen}
+              className="px-6 py-2 rounded-full border border-white/20 hover:border-brand-gold hover:text-brand-gold transition-all duration-300 text-xs uppercase tracking-widest"
+            >
+              Sign In
+            </motion.button>
+          )}
         </div>
 
         <button 
@@ -105,6 +272,11 @@ const Navbar = () => {
                   {item}
                 </a>
               ))}
+              {user ? (
+                <button onClick={onLogout} className="text-left text-red-400 uppercase tracking-widest">Logout</button>
+              ) : (
+                <button onClick={() => { onAuthOpen(); setIsMobileMenuOpen(false); }} className="text-left uppercase tracking-widest">Sign In</button>
+              )}
             </div>
           </motion.div>
         )}
@@ -419,9 +591,30 @@ const Footer = () => (
 );
 
 export default function App() {
+  const [isAuthOpen, setIsAuthOpen] = useState(false);
+  const [user, setUser] = useState<any>(null);
+
+  useEffect(() => {
+    const savedUser = localStorage.getItem('light_group_user');
+    if (savedUser) {
+      setUser(JSON.parse(savedUser));
+    }
+  }, []);
+
+  const handleAuthSuccess = (userData: any) => {
+    setUser(userData);
+    localStorage.setItem('light_group_user', JSON.stringify(userData));
+  };
+
+  const handleLogout = () => {
+    setUser(null);
+    localStorage.removeItem('light_group_user');
+  };
+
   return (
     <div className="min-h-screen bg-[#0a0a0a] selection:bg-brand-gold/30">
-      <Navbar />
+      <Navbar onAuthOpen={() => setIsAuthOpen(true)} user={user} onLogout={handleLogout} />
+      <AuthModal isOpen={isAuthOpen} onClose={() => setIsAuthOpen(false)} onAuthSuccess={handleAuthSuccess} />
       <main>
         <Hero />
         <Vision />
