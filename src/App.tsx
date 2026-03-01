@@ -522,47 +522,130 @@ const Work = () => {
 };
 
 const Contact = () => {
+  const [formData, setFormData] = useState({ name: '', email: '', message: '' });
+  const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setStatus('loading');
+    try {
+      const response = await fetch('/api/contact', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData),
+      });
+      const data = await response.json();
+      if (data.success) {
+        setStatus('success');
+        setFormData({ name: '', email: '', message: '' });
+        setTimeout(() => setStatus('idle'), 3000);
+      } else {
+        setStatus('error');
+      }
+    } catch (err) {
+      setStatus('error');
+    }
+  };
+
   return (
     <section id="contact" className="py-32 px-6 relative overflow-hidden">
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[1000px] h-[600px] bg-brand-gold/5 blur-[150px] rounded-full -z-10" />
       
-      <div className="max-w-4xl mx-auto text-center">
+      <div className="max-w-4xl mx-auto">
+        <div className="text-center mb-16">
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+          >
+            <h2 className="text-5xl md:text-8xl font-serif font-light mb-8">
+              Let's build something <br />
+              <span className="italic text-brand-gold">radiant</span> together.
+            </h2>
+            <p className="text-xl text-white/50 font-light max-w-2xl mx-auto">
+              Whether you have a fully formed vision or just a spark of an idea, 
+              we're here to help you bring it to light.
+            </p>
+          </motion.div>
+        </div>
+
         <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
+          initial={{ opacity: 0, scale: 0.95 }}
+          whileInView={{ opacity: 1, scale: 1 }}
           viewport={{ once: true }}
+          className="glass p-8 md:p-12 rounded-3xl max-w-2xl mx-auto"
         >
-          <h2 className="text-5xl md:text-8xl font-serif font-light mb-12">
-            Let's build something <br />
-            <span className="italic text-brand-gold">radiant</span> together.
-          </h2>
-          <p className="text-xl text-white/50 font-light mb-16 max-w-2xl mx-auto">
-            Whether you have a fully formed vision or just a spark of an idea, 
-            we're here to help you bring it to light.
-          </p>
-          
-          <div className="flex flex-col items-center gap-8">
-            <a 
-              href="mailto:hello@lightgroup.com" 
-              className="text-3xl md:text-5xl font-serif hover:text-brand-gold transition-colors underline underline-offset-8 decoration-white/10 hover:decoration-brand-gold"
-            >
-              hello@lightgroup.com
-            </a>
-            
-            <div className="flex gap-8 mt-12">
-              {[Instagram, Twitter, Linkedin].map((Icon, i) => (
-                <motion.a
-                  key={i}
-                  href="#"
-                  whileHover={{ y: -5, color: '#D4AF37' }}
-                  className="text-white/40 transition-colors"
-                >
-                  <Icon className="w-6 h-6" />
-                </motion.a>
-              ))}
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="grid md:grid-cols-2 gap-6">
+              <div className="space-y-2">
+                <label className="text-[10px] uppercase tracking-widest text-white/40 ml-1">Your Name</label>
+                <input
+                  type="text"
+                  required
+                  value={formData.name}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  className="w-full bg-white/5 border border-white/10 rounded-xl py-3 px-4 text-sm focus:border-brand-gold outline-none transition-colors"
+                  placeholder="John Doe"
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-[10px] uppercase tracking-widest text-white/40 ml-1">Email Address</label>
+                <input
+                  type="email"
+                  required
+                  value={formData.email}
+                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  className="w-full bg-white/5 border border-white/10 rounded-xl py-3 px-4 text-sm focus:border-brand-gold outline-none transition-colors"
+                  placeholder="john@example.com"
+                />
+              </div>
             </div>
-          </div>
+            <div className="space-y-2">
+              <label className="text-[10px] uppercase tracking-widest text-white/40 ml-1">Message</label>
+              <textarea
+                required
+                rows={4}
+                value={formData.message}
+                onChange={(e) => setFormData({ ...formData, message: e.target.value })}
+                className="w-full bg-white/5 border border-white/10 rounded-xl py-3 px-4 text-sm focus:border-brand-gold outline-none transition-colors resize-none"
+                placeholder="Tell us about your project..."
+              />
+            </div>
+            <button
+              type="submit"
+              disabled={status === 'loading'}
+              className="w-full bg-white text-black py-4 rounded-xl font-medium text-sm uppercase tracking-widest hover:bg-brand-gold hover:text-white transition-all duration-300 flex items-center justify-center gap-2"
+            >
+              {status === 'loading' ? <Loader2 className="w-4 h-4 animate-spin" /> : 
+               status === 'success' ? 'Message Sent!' : 'Send Message'}
+            </button>
+            {status === 'error' && (
+              <p className="text-red-400 text-xs text-center">Failed to send message. Please try again.</p>
+            )}
+          </form>
         </motion.div>
+
+        <div className="flex flex-col items-center gap-8 mt-20">
+          <a 
+            href="mailto:hello@lightgroup.com" 
+            className="text-2xl md:text-4xl font-serif hover:text-brand-gold transition-colors underline underline-offset-8 decoration-white/10 hover:decoration-brand-gold"
+          >
+            hello@lightgroup.com
+          </a>
+          
+          <div className="flex gap-8">
+            {[Instagram, Twitter, Linkedin].map((Icon, i) => (
+              <motion.a
+                key={i}
+                href="#"
+                whileHover={{ y: -5, color: '#D4AF37' }}
+                className="text-white/40 transition-colors"
+              >
+                <Icon className="w-6 h-6" />
+              </motion.a>
+            ))}
+          </div>
+        </div>
       </div>
     </section>
   );
